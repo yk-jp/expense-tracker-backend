@@ -1,5 +1,6 @@
 from django.db import models
-from django.core.validators import MinValueValidator 
+from django.core.validators import MinValueValidator
+
 
 class User(models.Model):
     name = models.CharField(max_length=50)
@@ -34,7 +35,7 @@ class Category(models.Model):
         return self.name
 
 
-class Budget(models.Model):
+class Transaction(models.Model):
     EVENT_CHOICES = (
         ('Income', 'Income'),
         ('Outcome', 'Outcome')
@@ -44,6 +45,7 @@ class Budget(models.Model):
         max_length=50,
         choices=EVENT_CHOICES
     )
+
     amount = models.DecimalField(
         max_digits=6,
         decimal_places=2,
@@ -52,10 +54,12 @@ class Budget(models.Model):
             MinValueValidator(1)
         ]
     )
+
     memo = models.TextField(
         null=True,
         blank=True
     )
+
     date = models.DateField(auto_now_add=True)
     # associations
     user = models.ForeignKey(
@@ -63,6 +67,7 @@ class Budget(models.Model):
         verbose_name=("user"),
         on_delete=models.CASCADE
     )
+
     category = models.ForeignKey(
         Category,
         verbose_name=("category"),
