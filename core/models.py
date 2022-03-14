@@ -60,7 +60,7 @@ class Transaction(models.Model):
         blank=True
     )
 
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField()
     # associations
     user = models.ForeignKey(
         User,
