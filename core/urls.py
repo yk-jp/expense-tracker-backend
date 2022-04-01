@@ -20,6 +20,10 @@ from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+<<<<<<< HEAD
     path('api/', include('api.urls'))
+=======
+    path('', include('api.urls'))
+>>>>>>> 37fca8bff5e942be81b372f84904e3ea45e2350d
 ]
 

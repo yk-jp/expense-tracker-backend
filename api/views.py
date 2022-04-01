@@ -4,7 +4,6 @@ from rest_framework.decorators import api_view
 from core.models import User, Category, Transaction
 from core.serializers import UserSerializer, CategorySerializer, TransactionSerializer
 
-
 @api_view(['GET'])
 def getData(request):
     all_transactions_current_month = Transaction.objects.all()
