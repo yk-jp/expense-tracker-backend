@@ -39,7 +39,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'api',
+    'transaction',
     'core',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -124,7 +124,7 @@ TIME_ZONE = 'PST8PDT'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False 
 
 
 # Static files (CSS, JavaScript, Images)
