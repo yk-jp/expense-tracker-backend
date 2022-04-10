@@ -6,45 +6,70 @@ from core.serializers import UserSerializer, CategorySerializer, TransactionSeri
 from .helper import get_start_end_of_month
 import datetime
 import calendar
+import simplejson as json
 from decimal import Decimal 
 
 @api_view(['POST'])
 def get_month_all(request):
-    print("body: ",request.data)
-
+    print("body: ", json.dumps(request.data, indent=4))    
+    
     this_month = get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
-    all_transactions_current_month = Transaction.objects.filter(t_date__range=(this_month["start"], this_month["end"] )) 
-    
-    serializer = TransactionSerializer(
-        all_transactions_current_month, many=True)
-    
-    print("get_month_all: ",serializer.data)
-    return Response(serializer.data)
+
+    try:
+        all_transactions_current_month = Transaction.objects.filter(t_date__range=(this_month["start"], this_month["end"])) 
+        serializer = TransactionSerializer(
+            all_transactions_current_month, many=True)
+        
+        print("get_month_all: ",json.dumps(serializer.data,indent=4))
+
+    except Exception:
+        return Response({
+            "message":"Failed to fetch data. Please try to refresh the page",
+            "is_success":False
+        },
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        ) 
+        
+    return Response(
+        {
+            "result": serializer.data,
+            "message": "successfully fecthed",
+            "is_success": True
+        })
 
 @api_view(['POST'])
 def add_new_event(request):
-    print("body: ", request.data)
+    print("body: ", json.dumps(request.data, indent=4))    
 
     serializer = TransactionSerializer(data=request.data)
+    
     if serializer.is_valid():
-        print("add_new_event: ", serializer.data)
+        print("add_new_event: ", json.dumps(serializer.data, indent=4))
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def get_stats(request):
-    print("body: ", request.data)
+    print("body: ", json.dumps(request.data, indent=4))  
 
     today = datetime.date.today()
     current_year = today.year
     current_month = today.month
     
-    this_month = get_start_end_of_month(current_year,current_month)
-    all_transactions_current_month = Transaction.objects.filter(t_date__range=(this_month["start"], this_month["end"])) 
-    
-    all_transactions_current_month = TransactionSerializer(
-        all_transactions_current_month, many=True).data
+    try:
+        this_month = get_start_end_of_month(current_year,current_month)
+        all_transactions_current_month = Transaction.objects.filter(t_date__range=(this_month["start"], this_month["end"])) 
+        
+        all_transactions_current_month = TransactionSerializer(
+            all_transactions_current_month, many=True).data
+    except Exception:
+        return Response({
+            "message":"Failed to fetch data. Please try to refresh the page",
+            "is_success":False
+        },
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        ) 
     
     stats = {
         "Income": 0,
@@ -66,7 +91,12 @@ def get_stats(request):
                 "Balance": Decimal(stats["Balance"]) - Decimal(transaction["amount"])
             } 
         
-    print("get_stats: ", stats)
-    return Response(stats, status=status.HTTP_201_CREATED)
+    print("get_stats: ", json.dumps(stats,indent=4))
+    
+    return Response({
+        "result": stats,
+        "message":"successfully fetched",
+        "is_success": True
+    })
 
 
