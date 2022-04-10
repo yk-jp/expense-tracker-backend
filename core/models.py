@@ -44,7 +44,7 @@ class Category(models.Model):
 class Transaction(models.Model):
     EVENT_CHOICES = (
         ('Income', 'Income'),
-        ('Outcome', 'Outcome')
+        ('Expense', 'Expense')
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

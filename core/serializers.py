@@ -15,6 +15,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class TransactionSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        many=False,
+        read_only=True,
+        slug_field='name'
+    ) 
+   
     class Meta:
         model = Transaction
         fields = '__all__'
