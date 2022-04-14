@@ -4,10 +4,10 @@ from rest_framework.decorators import api_view
 from core.models import User, Category, Transaction
 from core.serializers import TransactionSerializer
 from utils.date import get_start_end_of_month
+from utils.stats import get_stats
 import datetime
 import calendar
 import simplejson as json
-from decimal import Decimal 
 
 
 @api_view(['GET'])
@@ -31,25 +31,7 @@ def get_stats(request):
           status=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) 
     
-    stats = {
-        "Income": 0,
-        "Expense": 0,
-        "Balance": 0
-    }
-    
-    for transaction in all_transactions_current_month:
-        if transaction["event"] == "Income":
-            stats = {
-                **stats,
-                "Income": Decimal(stats["Income"]) + Decimal(transaction["amount"]),
-                "Balance": Decimal(stats["Balance"]) + Decimal(transaction["amount"])
-            }
-        else:
-             stats = {
-                **stats,
-                "Expense": Decimal(stats["Expense"]) + Decimal(transaction["amount"]),
-                "Balance": Decimal(stats["Balance"]) - Decimal(transaction["amount"])
-            } 
+    stats = get_stats(all_transactions_current_month)
         
     print("get_stats: ", json.dumps(stats,indent=4))
     
@@ -92,19 +74,7 @@ def get_category_stats(request, name):
         "Balance": 0
     }
     
-    for transaction in transactions_current_month_category:
-        if transaction["event"] == "Income":
-            stats = {
-                **stats,
-                "Income": Decimal(stats["Income"]) + Decimal(transaction["amount"]),
-                "Balance": Decimal(stats["Balance"]) + Decimal(transaction["amount"])
-            }
-        else:
-             stats = {
-                **stats,
-                "Expense": Decimal(stats["Expense"]) + Decimal(transaction["amount"]),
-                "Balance": Decimal(stats["Balance"]) - Decimal(transaction["amount"])
-            } 
+    stats = get_stats(transactions_current_month_category)
        
     print("get_stats_category: ", json.dumps(stats,indent=4))
     
