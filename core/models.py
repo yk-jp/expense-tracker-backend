@@ -85,4 +85,4 @@ class Transaction(models.Model):
     )
 
     def __str__(self):
-        return str(self.amount)
+        return str(self.user) + " " +  str(self.event) + " " +  str(self.category) + " " +  str(self.amount)
