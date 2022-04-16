@@ -4,14 +4,14 @@ from rest_framework.decorators import api_view
 from core.models import User, Category, Transaction
 from core.serializers import TransactionSerializer
 from utils.date import get_start_end_of_month
-from utils.stats import get_stats
+from utils.stats import get_stats, get_stats_with_category
 import datetime
 import calendar
 import simplejson as json
 
 
 @api_view(['GET'])
-def get_stats(request):
+def get_stats_month(request):
     today = datetime.date.today()
     current_year = today.year
     current_month = today.month
@@ -31,7 +31,7 @@ def get_stats(request):
           status=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) 
     
-    stats = get_stats(all_transactions_current_month)
+    stats = get_stats_with_category(all_transactions_current_month)
         
     print("get_stats: ", json.dumps(stats,indent=4))
     
@@ -51,7 +51,6 @@ def get_category_stats(request, name):
     current_month = today.month
     this_month = get_start_end_of_month(current_year,current_month)
         
-    
     try:
         transactions_current_month_category = Transaction.objects.filter(
         t_date__range=(this_month["start"], this_month["end"]), category__name=name
@@ -59,6 +58,7 @@ def get_category_stats(request, name):
         transactions_current_month_category = TransactionSerializer(
             transactions_current_month_category, many=True).data
         
+        print("get_stats_category: ", json.dumps(transactions_current_month_category,indent=4))
     except Exception:
         return Response(
           {
@@ -67,13 +67,7 @@ def get_category_stats(request, name):
           },
           status=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) 
-    
-    stats = {
-        "Income": 0,
-        "Expense": 0,
-        "Balance": 0
-    }
-    
+
     stats = get_stats(transactions_current_month_category)
        
     print("get_stats_category: ", json.dumps(stats,indent=4))
@@ -83,5 +77,3 @@ def get_category_stats(request, name):
         "message":"successfully fetched",
         "is_success": True
     })
-
-
