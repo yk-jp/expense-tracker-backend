@@ -51,6 +51,8 @@ def get_month_all(request):
             "is_success": True
         })
 
+
+# add try and catch block
 @api_view(['POST'])
 def add_new_event(request):
     print("body: ", json.dumps(request.data, indent=4))    
