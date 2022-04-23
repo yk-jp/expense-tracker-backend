@@ -20,6 +20,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='name'
     ) 
+    
+    def create(self,validated_data):
+        category = validated_data["category"]
+        
+        return Transaction.objects.create(**validated_data)
    
     class Meta:
         model = Transaction

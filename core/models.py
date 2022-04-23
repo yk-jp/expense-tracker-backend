@@ -29,6 +29,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, name, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+    id = models.AutoField(auto_created=True, primary_key=True, unique=True)
     name = models.CharField(max_length=50)
     email = models.EmailField(
         db_index=True,
@@ -52,27 +53,42 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Category(models.Model):
-    CATEGORY_CHOICES = (
+    CATEGORY_CHOICES_DEFAULT = (
+        ('Random', 'Random'),
         ('Food', 'Food'),
         ('Rent', 'Rent'),
         ('Phone', 'Phone'),
         ('Transportation', 'Transportation'),
         ('Education', 'Education'),
         ('Insurance', 'Insurance'),
-        ('Random', 'Random'),
-        ('Edit', 'Edit'),
-    )
+        ('Add', 'Add')
+    )    
+    
+    CATEGORY_TYPE = (
+        ('Expense', 'Expense'),
+        ('Income', 'Income')
+    )    
 
-    id = models.AutoField(auto_created=True, primary_key=True, unique=True) 
+    id = models.AutoField(auto_created=True, primary_key=True, unique=True)
+    
+    user = models.ForeignKey(
+        User,
+        verbose_name=("user"),
+        on_delete=models.CASCADE
+    )
 
     name = models.CharField(
         max_length=50,
-        choices=CATEGORY_CHOICES,
-        unique=True
+        default="Random"
+    )
+    
+    category_type = models.CharField(
+       max_length = 50,
+       choices= CATEGORY_TYPE
     )
 
     def __str__(self):
-        return self.name
+        return f'{self.user} , {self.category_type}, {self.name}'
 
 
 class Transaction(models.Model):
@@ -81,7 +97,7 @@ class Transaction(models.Model):
         ('Expense', 'Expense')
     )
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.AutoField(auto_created=True, primary_key=True, unique=True)
 
     event = models.CharField(
         max_length=50,
@@ -102,7 +118,7 @@ class Transaction(models.Model):
         blank=True
     )
 
-    t_date = models.DateField()
+    date = models.DateField()
      
     # associations
     user = models.ForeignKey(
@@ -113,10 +129,10 @@ class Transaction(models.Model):
 
     category = models.ForeignKey(
         Category,
-        verbose_name=("category"),
         null=True,
+        verbose_name=("category"),
         on_delete=models.SET_NULL
     )
 
     def __str__(self):
-        return str(self.user) + " " +  str(self.event) + " " +  str(self.category) + " " +  str(self.amount)
+        return f'{self.id} {self.user} {self.event} {self.category}   {self.amount}'

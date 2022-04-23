@@ -11,25 +11,26 @@ import calendar
 import simplejson as json
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_stats_month(request):
-    print('auth ',request.user)
+    print("body: ", json.dumps(request.data, indent=4))  
     user = request.user
     
-    today = datetime.date.today()
-    current_year = today.year
-    current_month = today.month
+    this_month = datetime.date.today().strftime("%Y-%m").split("-")
+    
+    if request.data: this_month = get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
+    else: this_month = get_start_end_of_month(int(this_month[0]),int(this_month[1]))
     
     try:
-        this_month = get_start_end_of_month(current_year,current_month)
-        
         all_transactions_current_month = user.transaction_set.filter(
-            t_date__range=(this_month["start"], this_month["end"])) 
+            date__range=(this_month["start"], this_month["end"])) 
         
         all_transactions_current_month = TransactionSerializer(
             all_transactions_current_month, many=True).data
+        
     except Exception:
+        raise Exception
         return Response(
           {
             "message":"Failed to fetch data. Please try to refresh the page",
@@ -49,20 +50,20 @@ def get_stats_month(request):
     })
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_category_stats(request, name):
     print("params: ", json.dumps(name, indent=4))  
     user = request.user
 
-    today = datetime.date.today()
-    current_year = today.year
-    current_month = today.month
-    this_month = get_start_end_of_month(current_year,current_month)
+    this_month = datetime.date.today().strftime("%Y-%m").split("-")
+    
+    if request.data: this_month = get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
+    else: this_month = get_start_end_of_month(int(this_month[0]),int(this_month[1]))
         
     try:
         transactions_current_month_category = user.transaction_set.filter(
-        t_date__range=(this_month["start"], this_month["end"]), category__name=name
+        date__range=(this_month["start"], this_month["end"]), category__name=name
         ) 
         transactions_current_month_category = TransactionSerializer(
             transactions_current_month_category, many=True).data
