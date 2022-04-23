@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from core.models import User, Category, Transaction
 from core.serializers import TransactionSerializer
 from utils.date import get_start_end_of_month
@@ -11,14 +12,20 @@ import simplejson as json
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_stats_month(request):
+    print('auth ',request.user)
+    user = request.user
+    
     today = datetime.date.today()
     current_year = today.year
     current_month = today.month
     
     try:
         this_month = get_start_end_of_month(current_year,current_month)
-        all_transactions_current_month = Transaction.objects.filter(t_date__range=(this_month["start"], this_month["end"])) 
+        
+        all_transactions_current_month = user.transaction_set.filter(
+            t_date__range=(this_month["start"], this_month["end"])) 
         
         all_transactions_current_month = TransactionSerializer(
             all_transactions_current_month, many=True).data
@@ -43,8 +50,10 @@ def get_stats_month(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_category_stats(request, name):
     print("params: ", json.dumps(name, indent=4))  
+    user = request.user
 
     today = datetime.date.today()
     current_year = today.year
@@ -52,7 +61,7 @@ def get_category_stats(request, name):
     this_month = get_start_end_of_month(current_year,current_month)
         
     try:
-        transactions_current_month_category = Transaction.objects.filter(
+        transactions_current_month_category = user.transaction_set.filter(
         t_date__range=(this_month["start"], this_month["end"]), category__name=name
         ) 
         transactions_current_month_category = TransactionSerializer(
