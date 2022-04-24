@@ -22,8 +22,6 @@ class TransactionSerializer(serializers.ModelSerializer):
     ) 
     
     def create(self,validated_data):
-        category = validated_data["category"]
-        
         return Transaction.objects.create(**validated_data)
    
     class Meta:

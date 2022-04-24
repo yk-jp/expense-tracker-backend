@@ -9,7 +9,7 @@ from utils.stats import get_stats
 import datetime
 import calendar
 import simplejson as json
-
+import ast
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -64,19 +64,30 @@ def add_new_event(request):
     
     new_record = {
         **request.data,
-        "user": user
+        "user": user.id
     }
     
     try:
-        if "category" in request.data and Category.objects.filter(pk=request.data["category"]).exists():
-            new_record = {
-                **new_record,
-                "category": Category.objects.get(pk=request.data["category"])
-            }
+        new_event = TransactionSerializer(data = new_record)
+        if new_event.is_valid():
+            if Category.objects.filter(pk=request.data["category"]).exists():
+                new_record = {
+                        **new_record,
+                        "category": Category.objects.get(pk=request.data["category"])
+                    }
+                
+            registered_event = user.transaction_set.create(**new_record) 
+                
         else:
-            new_record.pop("category", None)
-
-        registered_event = Transaction.objects.create(**new_record)
+            return Response(
+                {
+                "message": {
+                    **new_event.errors
+                },
+                "is_success" : False
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         return Response(
             { 
@@ -85,8 +96,9 @@ def add_new_event(request):
             },
                 status=status.HTTP_201_CREATED
             )
-        
-    except Exception:
+    
+    except Exception as e:
+        raise e
         return Response(
                 {
                 "message": "Failed to register new record. Please try again",
@@ -129,8 +141,32 @@ def update_event(request,id):
     
     user = request.user 
     
+    new_record = {
+        **request.data,
+        "user": user.id
+    }
+    
     try:
-       user.transaction_set.filter(pk=id).update(**request.data)
+        new_event = TransactionSerializer(data = new_record)
+        if new_event.is_valid():
+            if Category.objects.filter(pk=request.data["category"]).exists():
+                new_record = {
+                        **new_record,
+                        "category": Category.objects.get(pk=request.data["category"])
+                    }
+                
+            user.transaction_set.filter(pk=id).update(**new_record)
+                
+        else:
+            return Response(
+                {
+                "message": {
+                    **new_event.errors
+                },
+                "is_success" : False
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     except Exception:
         return Response(

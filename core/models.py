@@ -175,7 +175,6 @@ class Transaction(models.Model):
 
     category = models.ForeignKey(
         Category,
-        null=True,
         verbose_name=("category"),
         on_delete=models.PROTECT
     )
