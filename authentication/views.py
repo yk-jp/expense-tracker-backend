@@ -1,24 +1,46 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
-from core.models import User, Category, Transaction
-from core.serializers import UserSerializer 
+from core.models import User
+from core.serializers import UserSerializer
+from django.core.exceptions import ValidationError
 import simplejson as json
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def register_user(request):
-  print("body: ", json.dumps(request.data, indent=4))    
+  print("body: ", json.dumps(request.data, indent=4)) 
   
-  user = User.objects.create_user('user@gmail.com', 'user', 'hays1228')
+  new_account = {
+    "email": "",
+    "username" : "user",
+    "password" : "",
+    **request.data
+  } 
   
-  u = User.objects.get(name='user')
-  u = UserSerializer(
-            u).data
-  print("body: ", u) 
-   
+  try:
+    User.objects.create_user(new_account["email"],new_account["username"],new_account["password"])
+    
+  except (ValueError,ValidationError) as e:
+    return Response(
+      {   
+          "message": e.args[0],
+          "is_success":False
+      },
+      status=status.HTTP_500_INTERNAL_SERVER_ERROR
+      ) 
+  
+  except Exception as e:
+    return Response(
+      {   
+          "message":"Failed to register account. Please try again",
+          "is_success":False
+      },
+      status=status.HTTP_500_INTERNAL_SERVER_ERROR
+      ) 
+    
   return Response(
-    {
-      "password"
-    } ,status=status.HTTP_201_CREATED)
-  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+      {
+          "message": "successfully registered",
+          "is_success": True
+      })

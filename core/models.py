@@ -1,15 +1,31 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin,BaseUserManager
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, validate_email
+from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 import uuid
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, name, password, **extra_fields):
+    
+    def validation(self, email, name, password, **extra_fields):
         if not email:
             raise ValueError("Email is not provided")
+        
         if not password:
             raise ValueError("Password is not provided")
+        
+        if validate_email(email):
+            raise ValidationError("Enter a valid email address")
+        
+        if User.objects.filter(email=email).exists(): 
+            raise ValidationError(f'This email, \'{email}\' is already registered. Choose another email.')
+        
+        if len(password) < 8:
+            raise ValueError("Password is too short. enter at least 8 characters")
+    
+    def create_user(self, email, name, password, **extra_fields):
+       
+        self.validation(email, name, password, **extra_fields)
         
         user = self.model(
             name = name,
