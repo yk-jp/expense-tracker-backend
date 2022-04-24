@@ -70,14 +70,12 @@ def add_new_event(request):
     try:
         new_event = TransactionSerializer(data = new_record)
         if new_event.is_valid():
-            if Category.objects.filter(pk=request.data["category"]).exists():
-                new_record = {
-                        **new_record,
-                        "category": Category.objects.get(pk=request.data["category"])
-                    }
-                
+            new_record = {
+                    **new_record,
+                    "category": Category.objects.get(pk=request.data["category"])
+            }
             registered_event = user.transaction_set.create(**new_record) 
-                
+ 
         else:
             return Response(
                 {
