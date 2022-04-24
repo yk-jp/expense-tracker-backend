@@ -6,8 +6,38 @@ from django.utils.timezone import now
 import uuid
 
 class CustomUserManager(BaseUserManager):
+    VALIDATE_FIELDS = { 
+        "email":"email",
+        "password":"password"
+    }
     
-    def validation(self, email, name, password, **extra_fields):
+    def update_user(self, user, **fields):
+        User.objects.update_validation(user, **fields)
+        
+        if self.VALIDATE_FIELDS["password"] in fields:
+            user.set_password(fields["password"])
+            user.save()
+        else: User.objects.filter(pk=user.id).update(**fields)
+        
+    
+    def update_validation(self,user, **fields):
+        if len(fields) <= 0:
+            raise ValueError("There's nothing to be updated.")
+        
+        if self.VALIDATE_FIELDS["email"] in fields:
+            email = fields["email"] 
+            
+            if validate_email(fields["email"]):
+                raise ValidationError("Enter a valid email address")
+            
+            if User.objects.filter(email=fields["email"]).exclude(pk=user.id).exists(): 
+                raise ValidationError(f'This email, \'{email}\' is already registered. Choose another email.')
+        
+        if self.VALIDATE_FIELDS["password"] in fields:
+            if len(fields["password"]) < 8:
+                raise ValueError("Password is too short. enter at least 8 characters")
+    
+    def create_validation(self, email, name, password, **extra_fields):
         if not email:
             raise ValueError("Email is not provided")
         
@@ -25,7 +55,7 @@ class CustomUserManager(BaseUserManager):
     
     def create_user(self, email, name, password, **extra_fields):
        
-        self.validation(email, name, password, **extra_fields)
+        self.create_validation(email, name, password, **extra_fields)
         
         user = self.model(
             name = name,
@@ -147,8 +177,8 @@ class Transaction(models.Model):
         Category,
         null=True,
         verbose_name=("category"),
-        on_delete=models.SET_NULL
+        on_delete=models.PROTECT
     )
 
     def __str__(self):
-        return f'{self.id} {self.user} {self.event} {self.category}   {self.amount}'
+        return f'{self.id} {self.user} {self.event} {self.category} {self.amount}'
