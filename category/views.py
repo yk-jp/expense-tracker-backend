@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from core.models import User
 from core.serializers import CategorySerializer
 from django.core.exceptions import ValidationError
+from django.core.cache import caches
 import simplejson as json
 
 @api_view(['GET'])
