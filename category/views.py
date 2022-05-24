@@ -17,13 +17,13 @@ def get_category_all(request, type):
   category_all = None
   
   try:
-    cached_category_all = cache.get(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
+    cached_category_all = cache.get(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL)
     if cached_category_all:
       category_all = cached_category_all 
     else:
       category_all = user.category_set.filter(category_type=type)
       category_all = CategorySerializer(category_all, many=True).data
-      cache.set(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'], category_all)
+      cache.set(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL, category_all)
   
   except Exception as e:
     print(e)
@@ -62,7 +62,7 @@ def add_category(request):
     if new_category.is_valid() and new_category.create_validation():
       user.category_set.create(**new_record)
       # delete cache
-      cache.delete(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
+      cache.delete(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL)
       
     else:
         return Response(
@@ -120,7 +120,7 @@ def update_category(request, id):
     if new_category.is_valid() and new_category.update_validation(id):
       user.category_set.filter(pk=id).update(**new_record)
       # delete cache
-      cache.delete(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
+      cache.delete(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL)
        
     else:
         return Response(

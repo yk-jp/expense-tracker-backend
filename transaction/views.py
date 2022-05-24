@@ -4,11 +4,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from core.models import User, Category, Transaction
 from core.serializers import TransactionSerializer
-from utils.date import get_start_end_of_month, get_date
-from utils.stats import get_stats
 import datetime
 import calendar
 import simplejson as json
+from django.core.cache import cache
+from utils import db_config, stats_helper, date_helper
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -19,19 +19,29 @@ def get_month_all(request):
     
     this_month = datetime.date.today().strftime("%Y-%m").split("-")
     
-    if request.data: this_month = get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
-    else: this_month = get_start_end_of_month(int(this_month[0]),int(this_month[1]))
+    if request.data: this_month = date_helper.get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
+    else: this_month = date_helper.get_start_end_of_month(int(this_month[0]),int(this_month[1]))
     
     print("this_month: ", this_month)
     
     try:
-        all_transactions_month = user.transaction_set.filter(t_date__range=(this_month["start"], this_month["end"])) 
-        all_transactions_month = TransactionSerializer(
-            all_transactions_month, many=True).data
+        all_transactions_month =  None
+        cached_all_transactions_month = cache.get(db_config.CACHE_KEYS.transactions_month_all(user.id,request.data["year"],request.data["month"]))
+        
+        if cached_all_transactions_month:
+            all_transactions_month = cached_all_transactions_month
+        else:
+            all_transactions_month = user.transaction_set.filter(date__range=(this_month["start"], this_month["end"])) 
+            all_transactions_month = TransactionSerializer(all_transactions_month, many=True).data
+            cache.set(db_config.CACHE_KEYS.transactions_month_all(user.id,request.data["year"],request.data["month"]), all_transactions_month)
         
         print("get_month_all: ",json.dumps(all_transactions_month,indent=4))
-
-    except Exception:
+        
+        stats = stats_helper.get_stats(all_transactions_month)
+        print("get_month_all stats: ", json.dumps(stats,indent=4))
+        
+    except Exception as e:
+        print(e)
         return Response(
         {
             "message":"Failed to fetch data. Please try to refresh the page",
@@ -40,9 +50,7 @@ def get_month_all(request):
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) 
         
-    stats = get_stats(all_transactions_month)
-    
-    print("get_month_all stats: ", json.dumps(stats,indent=4))
+   
      
     return Response(
         {
@@ -74,7 +82,12 @@ def add_new_event(request):
                     "category": Category.objects.get(pk=request.data["category"])
             }
             registered_event = user.transaction_set.create(**new_record) 
- 
+            
+            date_data = date_helper.extract_year_and_month_and_day(new_record["date"])
+            cache.delete(db_config.CACHE_KEYS.transactions_month_all(user.id,date_data["year"],date_data["month"]))
+            # delete cache for the day
+            cache.delete(db_config.CACHE_KEYS.transactions_selected_day_all(user.id,date_data["year"], date_data["month"], date_data["day"]))
+            
         else:
             return Response(
                 {
@@ -111,12 +124,23 @@ def delete_event(request, id):
     
     user = request.user 
     
+    data = {
+        **request.data #date
+    }
+    
+    print(json.dumps(data))
+    
     try:
        deleted_event = user.transaction_set.filter(pk=id).delete()
-
        print("deleted_event", json.dumps(deleted_event, indent=4))
+       
+       date_data = date_helper.extract_year_and_month_and_day(data["date"])
+       cache.delete(db_config.CACHE_KEYS.transactions_month_all(user.id, date_data["year"],date_data["month"]))
+       # delete cache for the day
+       cache.delete(db_config.CACHE_KEYS.transactions_selected_day_all(user.id,date_data["year"], date_data["month"], date_data["day"]))
 
-    except Exception:
+    except Exception as e:
+        print(e)
         return Response(
         {
             "message":"Failed to delete data. Please try to refresh the page",
@@ -137,6 +161,8 @@ def update_event(request,id):
     print("body: ", json.dumps(request.data, indent=4))
     
     user = request.user 
+
+    prev_date = request.data.pop('prev_date', None)
     
     new_record = {
         **request.data,
@@ -153,6 +179,10 @@ def update_event(request,id):
                     }
                 
             user.transaction_set.filter(pk=id).update(**new_record)
+            date_data = date_helper.extract_year_and_month_and_day(prev_date)
+            cache.delete(db_config.CACHE_KEYS.transactions_month_all(user.id, date_data["year"],date_data["month"]))
+            # delete cache for the day
+            cache.delete(db_config.CACHE_KEYS.transactions_selected_day_all(user.id,date_data["year"], date_data["month"], date_data["day"]))
                 
         else:
             return Response(
@@ -165,7 +195,8 @@ def update_event(request,id):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-    except Exception:
+    except Exception as e:
+        print(e)
         return Response(
         {
             "message":"Failed to update data. Please try to refresh the page",
@@ -189,16 +220,23 @@ def get_day_event(request):
     
     this_date = datetime.date.today().strftime("%Y-%m-%d")
     
-    if request.data: this_date = get_date(int(request.data["year"]),int(request.data["month"]), int(request.data["day"]))
+    if request.data: this_date = date_helper.get_date(int(request.data["year"]),int(request.data["month"]), int(request.data["day"]))
     
     print("this_date: ", this_date)
     
     try:
-        all_transactions_selected_day = user.transaction_set.filter(t_date__range=(this_date, this_date)) 
-        
-        all_transactions_selected_day = TransactionSerializer(
+        all_transactions_selected_day =  None
+        cached_all_transactions_selected_day = cache.get(db_config.CACHE_KEYS.transactions_selected_day_all(user.id,request.data["year"],request.data["month"], request.data["day"]))
+            
+        if cached_all_transactions_selected_day:
+            all_transactions_selected_day  = cached_all_transactions_selected_day
+        else:
+            all_transactions_selected_day = user.transaction_set.filter(date__range=(this_date, this_date)) 
+            all_transactions_selected_day = TransactionSerializer(
             all_transactions_selected_day, many=True).data
-        
+                
+            cache.set(db_config.CACHE_KEYS.transactions_selected_day_all(user.id,request.data["year"],request.data["month"], request.data["day"]), all_transactions_selected_day)
+            
         print("get_day_event: ", json.dumps(all_transactions_selected_day,indent=4))
 
     except Exception:
