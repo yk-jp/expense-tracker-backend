@@ -5,19 +5,28 @@ from rest_framework.permissions import IsAuthenticated
 from core.models import User
 from core.serializers import CategorySerializer
 from django.core.exceptions import ValidationError
-from django.core.cache import caches
+from django.core.cache import cache
 import simplejson as json
+from utils import db_config
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_category_all(request, type):
   user = request.user
+  category_all = None
   
   try:
-    category_all = user.category_set.filter(category_type=type)
-    category_all = CategorySerializer(category_all, many=True).data
+    cached_category_all = cache.get(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
+    if cached_category_all:
+      category_all = cached_category_all 
+    else:
+      category_all = user.category_set.filter(category_type=type)
+      category_all = CategorySerializer(category_all, many=True).data
+      cache.set(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'], category_all)
   
   except Exception as e:
+    print(e)
     return Response(
       {   
           "message":"Failed to fetch data. Please try again",
@@ -25,7 +34,7 @@ def get_category_all(request, type):
       },
       status=status.HTTP_500_INTERNAL_SERVER_ERROR
       ) 
-    
+     
   return Response(
       {
           "result": {
@@ -52,7 +61,9 @@ def add_category(request):
     
     if new_category.is_valid() and new_category.create_validation():
       user.category_set.create(**new_record)
-       
+      # delete cache
+      cache.delete(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
+      
     else:
         return Response(
             {
@@ -108,6 +119,8 @@ def update_category(request, id):
     
     if new_category.is_valid() and new_category.update_validation(id):
       user.category_set.filter(pk=id).update(**new_record)
+      # delete cache
+      cache.delete(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
        
     else:
         return Response(
@@ -153,6 +166,8 @@ def delete_category(request, id):
   
   try:
     user.category_set.filter(pk=id).delete()
+    # delete cache
+    cache.delete(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
   
   except Exception as e:
     return Response(

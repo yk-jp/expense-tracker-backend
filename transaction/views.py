@@ -9,7 +9,6 @@ from utils.stats import get_stats
 import datetime
 import calendar
 import simplejson as json
-import ast
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
