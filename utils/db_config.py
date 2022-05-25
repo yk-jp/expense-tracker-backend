@@ -19,6 +19,6 @@ class CacheKeys(object):
  
   def transactions_selected_day_all(self, user_id, year, month, day):
     return f'{user_id}-{year}-{month}-{day}' + self.TRANSACTIONS_SELECTED_DAY_ALL
- 
+
  
 CACHE_KEYS = CacheKeys()

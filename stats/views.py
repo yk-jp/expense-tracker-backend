@@ -7,7 +7,8 @@ from core.serializers import TransactionSerializer
 import datetime
 import calendar
 import simplejson as json
-from utils import date_helper, stats_helper
+from django.core.cache import cache
+from utils import db_config, date_helper, stats_helper
 
 
 @api_view(['POST'])
@@ -16,20 +17,33 @@ def get_stats_month(request):
     print("body: ", json.dumps(request.data, indent=4))  
     user = request.user
     
-    this_month = datetime.date.today().strftime("%Y-%m").split("-")
+    month_data = datetime.date.today().strftime("%Y-%m").split("-")
     
-    if request.data: this_month = date_helper.get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
-    else: this_month = date_helper.get_start_end_of_month(int(this_month[0]),int(this_month[1]))
+    if request.data: month_data = date_helper.get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
+    else: month_data = date_helper.get_start_end_of_month(int(month_data[0]),int(month_data[1]))
+    
+    print("month: ", month_data)
     
     try:
-        all_transactions_current_month = user.transaction_set.filter(
-            date__range=(this_month["start"], this_month["end"])) 
+        all_transactions_month =  None
+        cached_all_transactions_month = cache.get(db_config.CACHE_KEYS.transactions_month_all(user.id,month_data["start"].strftime("%Y"), month_data["start"].strftime("%m")))
         
-        all_transactions_current_month = TransactionSerializer(
-            all_transactions_current_month, many=True).data
+        if cached_all_transactions_month:
+            all_transactions_month = cached_all_transactions_month
+        else:
+            all_transactions_month = user.transaction_set.filter(
+                date__range=(month_data["start"], month_data["end"])) 
+            all_transactions_month = TransactionSerializer(
+                all_transactions_month, many=True).data
+            
+            cache.set(db_config.CACHE_KEYS.transactions_month_all(user.id, month_data["start"].strftime("%Y"),month_data["start"].strftime("%m")), all_transactions_month)
         
-    except Exception:
-        raise Exception
+        stats = stats_helper.get_stats_with_category(all_transactions_month)
+        
+        print("get_stats: ", json.dumps(stats,indent=4))
+        
+    except Exception as e:
+        print(e)
         return Response(
           {
             "message":"Failed to fetch data. Please try to refresh the page",
@@ -37,10 +51,6 @@ def get_stats_month(request):
           },
           status=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) 
-    
-    stats = stats_helper.get_stats_with_category(all_transactions_current_month)
-        
-    print("get_stats: ", json.dumps(stats,indent=4))
     
     return Response({
         "result": stats,
@@ -54,14 +64,14 @@ def get_category_stats(request, name):
     print("params: ", json.dumps(name, indent=4))  
     user = request.user
 
-    this_month = datetime.date.today().strftime("%Y-%m").split("-")
+    month_data = datetime.date.today().strftime("%Y-%m").split("-")
     
-    if request.data: this_month = date_helper.get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
-    else: this_month = date_helper.get_start_end_of_month(int(this_month[0]),int(this_month[1]))
+    if request.data: month_data = date_helper.get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
+    else: month_data = date_helper.get_start_end_of_month(int(month_data[0]),int(month_data[1]))
         
     try:
         transactions_current_month_category = user.transaction_set.filter(
-        date__range=(this_month["start"], this_month["end"]), category__name=name
+        date__range=(month_data["start"], month_data["end"]), category__name=name
         ) 
         transactions_current_month_category = TransactionSerializer(
             transactions_current_month_category, many=True).data
