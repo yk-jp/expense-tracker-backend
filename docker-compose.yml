@@ -4,7 +4,9 @@ services:
     build: .
     ports:
       - 8000:8000
-    image: expense-tracker-backend   #tag this image to rename
+    image: expense-tracker-backend
+    volumes:
+      - .:/app
     container_name: expense-tracker-backend
     command: python manage.py runserver 0.0.0.0:8000
     depends_on:
@@ -25,7 +27,7 @@ services:
     volumes:
       - redis-data:/data/cache
     ports:
-      - 3679:3679
+      - 6379:6379
     
 volumes:
   mongo-data:
