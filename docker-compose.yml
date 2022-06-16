@@ -15,7 +15,7 @@ services:
   mongodb:
     image: mongo:5.0
     ports:
-      - 27017:27017
+      - 27018:27017
     restart: always
     # environment:
     #   MONGO_INITDB_ROOT_USERNAME: root
