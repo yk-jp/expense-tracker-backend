@@ -7,6 +7,11 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    
+    if os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN'): 
+        #debugging inside docker container with vscode debugger tool
+        import ptvsd
+        ptvsd.enable_attach(address=('0.0.0.0', 3030), redirect_output=True)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
