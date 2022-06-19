@@ -31,7 +31,7 @@ clean-i-django:
 clean-i-redis:
 	docker rmi redis:7.0
 
-clean-i-mongo:
+clean-i-mongodb:
 	docker rmi mongo:5.0
 
 clean-i-all:
@@ -44,7 +44,7 @@ clean-if-django:
 clean-if-redis:
 	docker rmi -f redis:7.0
 
-clean-if-mongo:
+clean-if-mongodb:
 	docker rmi -f mongo:5.0
 
 clean-if-all:
@@ -55,12 +55,12 @@ clean-all:
 	$(MAKE) clean-c-all; $(MAKE) clean-i-all
 
 #clean volume
-clean-v-mongo:
+clean-v-mongodb:
 	docker volume rm expense-tracker-backend_mongo-data
 
 clean-v-redis:
 	docker volume rm expense-tracker-backend_redis-data
 
 clean-v-all:
-	$(MAKE) clean-v-mongo ; $(MAKE) clean-v-redis
+	$(MAKE) clean-v-mongodb ; $(MAKE) clean-v-redis
 
