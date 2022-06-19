@@ -20,12 +20,14 @@ services:
     restart: always
     volumes:
       - mongo-data:/data/db
+    container_name: mongodb
   redis: 
     image: redis:7.0
     volumes:
       - redis-data:/data/cache
     ports:
       - 6379:6379
+    container_name: redis 
     
 volumes:
   mongo-data:
