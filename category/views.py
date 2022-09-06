@@ -16,14 +16,16 @@ def get_category_all(request, type):
   user = request.user
   category_all = None
   
+  cache_key = str(user.id) + type + db_config.CACHE_KEYS.CATEGORY_ALL 
+  
   try:
-    cached_category_all = cache.get(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL)
+    cached_category_all = cache.get(cache_key)
     if cached_category_all:
       category_all = cached_category_all 
     else:
       category_all = user.category_set.filter(category_type=type)
       category_all = CategorySerializer(category_all, many=True).data
-      cache.set(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL, category_all)
+      cache.set(cache_key, category_all)
   
   except Exception as e:
     print(e)
