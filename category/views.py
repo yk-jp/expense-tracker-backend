@@ -16,7 +16,7 @@ def get_category_all(request, type):
   user = request.user
   category_all = None
   
-  cache_key = db_config.create_category_key(str(user.id), type)
+  cache_key = db_config.CACHE_KEYS.create_category_key(str(user.id), type)
   
   try:
     cached_category_all = cache.get(cache_key)
@@ -58,7 +58,7 @@ def add_category(request):
     "user": user.id
   } 
   
-  cache_key = db_config.create_category_key(str(user.id), request.data["category_type"])
+  cache_key = db_config.CACHE_KEYS.create_category_key(str(user.id), request.data["category_type"])
   
   try:
     new_category = CategorySerializer(data = new_record) 
@@ -118,7 +118,7 @@ def update_category(request, type, id):
       "user": user.id
   }
   
-  cache_key = db_config.create_category_key(str(user.id), type)
+  cache_key = db_config.CACHE_KEYS.create_category_key(str(user.id), type)
    
   try:
     new_category = CategorySerializer(data = new_record) 
@@ -169,7 +169,7 @@ def update_category(request, type, id):
 @permission_classes([IsAuthenticated])
 def delete_category(request,type, id):
   user = request.user 
-  cache_key = db_config.create_category_key(str(user.id), type)
+  cache_key = db_config.CACHE_KEYS.create_category_key(str(user.id), type)
   
   try:
     user.category_set.filter(pk=id).delete()
