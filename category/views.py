@@ -108,7 +108,7 @@ def add_category(request):
  
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def update_category(request, id):
+def update_category(request, type, id):
   print("body: ", json.dumps(request.data, indent=4)) 
   
   user = request.user 
@@ -118,7 +118,7 @@ def update_category(request, id):
       "user": user.id
   }
   
-  cache_key = db_config.create_category_key(str(user.id), request.data["category_type"])
+  cache_key = db_config.create_category_key(str(user.id), type)
    
   try:
     new_category = CategorySerializer(data = new_record) 
@@ -167,9 +167,9 @@ def update_category(request, id):
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
-def delete_category(request, id):
+def delete_category(request,type, id):
   user = request.user 
-  cache_key = db_config.create_category_key(str(user.id), request.data["category_type"])
+  cache_key = db_config.create_category_key(str(user.id), type)
   
   try:
     user.category_set.filter(pk=id).delete()
