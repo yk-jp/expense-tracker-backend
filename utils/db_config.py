@@ -13,6 +13,9 @@ class CacheKeys(object):
       self._instance = super(CacheKeys, self).__new__(self)
     
     return self._instance
+  
+  def create_category_key(self, user_id, transaction_type):
+    return f'{user_id}-{transaction_type}' + self.CATEGORY_ALL
    
   def transactions_month_all(self, user_id, year, month):
     return f'{user_id}-{year}-{month}' + self.TRANSACTIONS_MONTH_ALL

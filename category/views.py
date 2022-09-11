@@ -16,7 +16,7 @@ def get_category_all(request, type):
   user = request.user
   category_all = None
   
-  cache_key = str(user.id) + type + db_config.CACHE_KEYS.CATEGORY_ALL 
+  cache_key = db_config.create_category_key(str(user.id), type)
   
   try:
     cached_category_all = cache.get(cache_key)
@@ -58,13 +58,15 @@ def add_category(request):
     "user": user.id
   } 
   
+  cache_key = db_config.create_category_key(str(user.id), request.data["category_type"])
+  
   try:
     new_category = CategorySerializer(data = new_record) 
     
     if new_category.is_valid() and new_category.create_validation():
       user.category_set.create(**new_record)
       # delete cache
-      cache.delete(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL)
+      cache.delete(cache_key)
       
     else:
         return Response(
@@ -115,6 +117,8 @@ def update_category(request, id):
       **request.data,
       "user": user.id
   }
+  
+  cache_key = db_config.create_category_key(str(user.id), request.data["category_type"])
    
   try:
     new_category = CategorySerializer(data = new_record) 
@@ -122,7 +126,7 @@ def update_category(request, id):
     if new_category.is_valid() and new_category.update_validation(id):
       user.category_set.filter(pk=id).update(**new_record)
       # delete cache
-      cache.delete(str(user.id) + db_config.CACHE_KEYS.CATEGORY_ALL)
+      cache.delete(cache_key)
        
     else:
         return Response(
@@ -165,11 +169,12 @@ def update_category(request, id):
 @permission_classes([IsAuthenticated])
 def delete_category(request, id):
   user = request.user 
+  cache_key = db_config.create_category_key(str(user.id), request.data["category_type"])
   
   try:
     user.category_set.filter(pk=id).delete()
     # delete cache
-    cache.delete(str(user.id) + db_config.CACHE_KEYS['CATEGORY_ALL'])
+    cache.delete(cache_key)
   
   except Exception as e:
     return Response(
