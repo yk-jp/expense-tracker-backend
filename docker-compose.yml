@@ -9,8 +9,6 @@ services:
     volumes:
       - .:/app
     container_name: expense-tracker-backend
-    # command: python manage.py runserver 0.0.0.0:8000
-    entrypoint: sh /app/docker-entrypoint.sh
     depends_on:
       - mongodb
       - redis

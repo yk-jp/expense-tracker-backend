@@ -1,5 +1,5 @@
 build:
-	docker-coompose build -f docker-compose.yml .
+	docker-compose build
 
 run:
 	docker-compose -f docker-compose.yml up
