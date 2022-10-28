@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  expense-tracker-backend:
+    build: .
+    ports:
+      - 8000:8000
+      - 3030:3030 # for debugging
+    image: expense-tracker-backend
+    volumes:
+      - .:/app
+    container_name: expense-tracker-backend
+    depends_on:
+      - mongodb
+      - redis
+  mongodb:
+    image: mongo:5.0
+    ports:
+      - 27018:27017
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    container_name: mongodb
+  redis: 
+    image: redis:7.0
+    volumes:
+      - redis-data:/data/cache
+    ports:
+      - 6379:6379
+    container_name: redis 
+    
+volumes:
+  mongo-data:
+    driver: local
+  redis-data:
+    driver: local
