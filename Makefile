@@ -1,6 +1,9 @@
 build:
 	docker-compose build
 
+build-prod:
+	docker build -t expense-tracker-backend-prod -f Dockerfile.prod .
+
 run:
 	docker-compose -f docker-compose.yml up
 
