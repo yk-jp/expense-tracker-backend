@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from core.models import User, Category, Transaction
 from core.serializers import TransactionSerializer
 import datetime
+from dateutil.relativedelta import relativedelta
 import calendar
 import simplejson as json
 from django.core.cache import cache
@@ -39,6 +40,46 @@ def get_stats_month(request):
             cache.set(db_config.CACHE_KEYS.transactions_month_all(user.id, month_data["start"].strftime("%Y"),month_data["start"].strftime("%m")), all_transactions_month)
         
         stats = stats_helper.get_stats_with_category(all_transactions_month)
+        
+        print("get_stats: ", json.dumps(stats,indent=4))
+        
+    except Exception as e:
+        print(e)
+        return Response(
+          {
+            "message":"Failed to fetch data. Please try to refresh the page",
+            "is_success":False
+          },
+          status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        ) 
+    
+    return Response({
+        "result": stats,
+        "message":"successfully fetched",
+        "is_success": True
+    })
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_stats_recent_one_year(request):
+    print("body: ", json.dumps(request.data, indent=4))  
+    user = request.user
+    
+    current_date = datetime.date.today().strftime("%Y-%m").split("-")
+    month_data = date_helper.get_start_end_of_month(int(current_date[0]),int(current_date[1]))
+    current_date_end = month_data["end"]
+    
+    date_one_year_before_current = month_data["start"] - relativedelta(years=1)
+    
+    print(date_one_year_before_current) 
+     
+    try:
+        all_transactions_recent_one_year = user.transaction_set.filter(
+            date__range=(date_one_year_before_current, current_date_end)) 
+        all_transactions_recent_one_year = TransactionSerializer(
+            all_transactions_recent_one_year, many=True).data
+        
+        stats = stats_helper.get_stats_recent_one_year(all_transactions_recent_one_year)
         
         print("get_stats: ", json.dumps(stats,indent=4))
         
