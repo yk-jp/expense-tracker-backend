@@ -28,7 +28,6 @@ def get_category_all(request, type):
       cache.set(cache_key, category_all)
   
   except Exception as e:
-    print(e)
     return Response(
       {   
           "message":"Failed to fetch data. Please try again",
@@ -49,8 +48,6 @@ def get_category_all(request, type):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_category(request):
-  print("body: ", json.dumps(request.data, indent=4)) 
-  
   user = request.user
   
   new_record = {
@@ -109,8 +106,6 @@ def add_category(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_category(request, type, id):
-  print("body: ", json.dumps(request.data, indent=4)) 
-  
   user = request.user 
   
   new_record = {
