@@ -15,15 +15,12 @@ from utils import db_config, date_helper, stats_helper
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_stats_month(request):
-    print("body: ", json.dumps(request.data, indent=4))  
     user = request.user
     
     month_data = datetime.date.today().strftime("%Y-%m").split("-")
     
     if request.data: month_data = date_helper.get_start_end_of_month(int(request.data["year"]),int(request.data["month"]))
     else: month_data = date_helper.get_start_end_of_month(int(month_data[0]),int(month_data[1]))
-    
-    print("month: ", month_data)
     
     try:
         all_transactions_month =  None
@@ -41,10 +38,7 @@ def get_stats_month(request):
         
         stats = stats_helper.get_stats_with_category(all_transactions_month)
         
-        print("get_stats: ", json.dumps(stats,indent=4))
-        
     except Exception as e:
-        print(e)
         return Response(
           {
             "message":"Failed to fetch data. Please try to refresh the page",
@@ -62,7 +56,6 @@ def get_stats_month(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_stats_recent_one_year(request):
-    print("body: ", json.dumps(request.data, indent=4))  
     user = request.user
     
     current_date = datetime.date.today().strftime("%Y-%m").split("-")
@@ -71,8 +64,6 @@ def get_stats_recent_one_year(request):
     
     date_one_year_before_current = month_data["start"] - relativedelta(years=1)
     
-    print(date_one_year_before_current) 
-     
     try:
         all_transactions_recent_one_year = user.transaction_set.filter(
             date__range=(date_one_year_before_current, current_date_end)) 
@@ -81,10 +72,7 @@ def get_stats_recent_one_year(request):
         
         stats = stats_helper.get_stats_recent_one_year(all_transactions_recent_one_year)
         
-        print("get_stats: ", json.dumps(stats,indent=4))
-        
     except Exception as e:
-        print(e)
         return Response(
           {
             "message":"Failed to fetch data. Please try to refresh the page",
@@ -102,7 +90,6 @@ def get_stats_recent_one_year(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_category_stats(request, name):
-    print("params: ", json.dumps(name, indent=4))  
     user = request.user
 
     month_data = datetime.date.today().strftime("%Y-%m").split("-")
@@ -117,7 +104,6 @@ def get_category_stats(request, name):
         transactions_current_month_category = TransactionSerializer(
             transactions_current_month_category, many=True).data
         
-        print("get_stats_category: ", json.dumps(transactions_current_month_category,indent=4))
     except Exception:
         return Response(
           {
@@ -129,8 +115,6 @@ def get_category_stats(request, name):
 
     stats = stats_helper.get_stats(transactions_current_month_category)
        
-    print("get_stats_category: ", json.dumps(stats,indent=4))
-    
     return Response({
         "result": stats,
         "message":"successfully fetched",

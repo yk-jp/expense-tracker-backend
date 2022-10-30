@@ -10,8 +10,6 @@ import simplejson as json
 
 @api_view(['POST'])
 def register_user(request):
-  print("body: ", json.dumps(request.data, indent=4)) 
-  
   new_account = {
     "email": "",
     "username" : "user",
@@ -50,8 +48,6 @@ def register_user(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_user(request):
-  print("body: ", json.dumps(request.data, indent=4)) 
-  
   user = request.user 
   
   updated_field = [key for key in request.data.keys()][0] if request.data else None
